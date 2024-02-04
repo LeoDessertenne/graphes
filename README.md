@@ -8,7 +8,7 @@ SAE 2.02 - The aim is to implement a variety of graph-related algorithms.
 
 ## Installation
 
-Make sure to have Python installed on your machine.
+Make sure to have Python installed on your machine and you can run the script
 
 ## Usage
 You can create new variables to build your automaton using the following format:
