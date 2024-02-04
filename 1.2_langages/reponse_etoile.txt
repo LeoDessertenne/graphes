@@ -1,0 +1,4 @@
+Pourquoi ne peut-on pas faire de fonction calculant l’étoile d’un langage ?
+
+Il n'est pas possibe de faire l'étoile d'un langage car sa longueur est infinie il n'est donc pas possible de la calculer,
+il est seulement possible de calculer un nombre d'occurence finis de l'étoile d'un langage.
