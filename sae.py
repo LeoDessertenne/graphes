@@ -157,8 +157,9 @@ def puis(L1, n):
 
 # 1.2.3
 # La raison en est que l'ensemble des langages est infini, et certains de ces langages sont indécidables,
-# c'est-à-dire qu'il n'y a pas de méthode algorithmique qui puisse déterminer si une chaîne donnée 
+# c'est-à-dire qu'il n'y a pas de méthode algorithmique qui puisse déterminer si une chaîne donnée
 # appartient ou non au langage.
+
 
 def tousmots(L1, n):
     """
@@ -283,12 +284,12 @@ def lirelettre(T, E, a):
         [2, 4]
 
     """
-    listReadLetter = set()
+    listReadLetter = []
     for transition in T:
         if transition[0] in E and transition[1] == a:
-            listReadLetter.add(transition[2])
+            listReadLetter.append(transition[2])
 
-    return list(listReadLetter)
+    return listReadLetter
 
 
 def liremot(T, E, m):
@@ -312,19 +313,20 @@ def liremot(T, E, m):
     """
     lst_etat = set()
     for etat in E:
-        mot = m
-        i = 0
         etat_mot = etat
-        com_transition = 0
-        while mot != "" and com_transition < len(E):
-            lettre_actuelle = mot[i]
+        mot_rest = m
+        while mot_rest:
+            lettre_actuelle = mot_rest[0]
+            transition_trouvee = False
             for transition in T:
                 if transition[0] == etat_mot and transition[1] == lettre_actuelle:
                     etat_mot = transition[2]
-                    mot = mot[1:]
+                    mot_rest = mot_rest[1:]
+                    transition_trouvee = True
                     break
-                com_transition += 1
-        if mot == "":
+            if not transition_trouvee:
+                break
+        if mot_rest == "":
             lst_etat.add(etat_mot)
     return list(lst_etat)
 
@@ -522,7 +524,7 @@ def renommage(auto):
         for i in range(len(ancien_etats)):
             if ancien_etats[i] == transition[2]:
                 transition_act.append(transition[1])
-                transition_act.append(nouveau_etats[i])      
+                transition_act.append(nouveau_etats[i])
         nouveau_transitions.append(transition_act)
 
     new_auto = {
@@ -975,11 +977,11 @@ def check_classe(classe0, classe1):
 
 def produit(automate1, automate2):
     """Calcule le produit de deux automates.
-    
+
     Args:
     - automate1 (dict): un dictionnaire représentant un automate
     - automate2 (dict): un dictionnaire représentant un automate de la même manière que `automate1`.
-    
+
     Returns:
     Un dictionnaire représentant l'automate produit de `automate1` et `automate2`
     """
@@ -990,62 +992,27 @@ def produit(automate1, automate2):
         "I": [],
         "F": []
     }
-    etat_debut = list()
-    for element in automate1["I"]:
-        etat_debut.append(element)
-    for element in automate2["I"]:
-        etat_debut.append(element)
-    auto_copy["I"].append(tuple(etat_debut))
-    auto_copy["etats"].append(tuple(etat_debut))
-    lst_etat_fait = []
-    print(auto_copy["etats"])
-    for etat1, etat2 in auto_copy["etats"]:
-        etat_arrive_a = []
-        etat_arrive_b = []
-        res_a_1 = 0
-        res_b_1 = 0
-        res_a_2 = 0
-        res_b_2 = 0
-        if etat1 != -1:
-            for transition in automate1["transitions"]:
-                if transition[0] == etat1 and transition[1] == "a":
-                    etat_arrive_a.append(transition[2])
-                    res_a_1 = 1
-                if transition[0] == etat1 and transition[1] == "b":
-                    etat_arrive_b.append(transition[2])
-                    res_b_1 = 1
-        if etat2 != -1:
-            for transition in automate2["transitions"]:
-                if transition[0] == etat2 and transition[1] == "a":
-                    etat_arrive_a.append(transition[2])
-                    res_a_2 = 1
-                if transition[0] == etat2 and transition[1] == "b":
-                    etat_arrive_b.append(transition[2])
-                    res_b_2 = 1
-        if len(etat_arrive_a) != 2 and res_a_1 == 0:
-            etat_arrive_a.insert(0, -1)
-        if len(etat_arrive_a) != 2 and res_a_2 == 0:
-            etat_arrive_a.append(-1)
-        if len(etat_arrive_b) != 2 and res_b_1 == 0:
-            etat_arrive_b.insert(0, -1)
-        if len(etat_arrive_b) != 2 and res_b_2 == 0:
-            etat_arrive_b.append(-1)
-        lst_etat_fait.append((etat1, etat2))
-        if not etat_arrive_a == [-1, -1]:
-            if tuple(etat_arrive_a) not in auto_copy["etats"]:
-                auto_copy["etats"].append(tuple(etat_arrive_a))
+    # Toutes les combinaisons d'états initiaux des deux automates.
+    initial_pairs = [(i1, i2) for i1 in automate1["I"] for i2 in automate2["I"]]
+    auto_copy["I"].extend(initial_pairs)
+    auto_copy["etats"].extend(initial_pairs)
 
-            transition_1_a = [(etat1, etat2), "a", tuple(etat_arrive_a)]
-            if transition_1_a not in auto_copy["transitions"]:
-                auto_copy["transitions"].append(transition_1_a)
+    a_traiter = list(initial_pairs)
+    while a_traiter:
+        etat1, etat2 = a_traiter.pop(0)
+        for symbole in auto_copy["alphabet"]:
+            dest1 = [t[2] for t in automate1["transitions"] if t[0] == etat1 and t[1] == symbole] or [-1]
+            dest2 = [t[2] for t in automate2["transitions"] if t[0] == etat2 and t[1] == symbole] or [-1]
+            for d1 in dest1:
+                for d2 in dest2:
+                    nouvel_etat = (d1, d2)
+                    if nouvel_etat not in auto_copy["etats"]:
+                        auto_copy["etats"].append(nouvel_etat)
+                        a_traiter.append(nouvel_etat)
+                    transition = [(etat1, etat2), symbole, nouvel_etat]
+                    if transition not in auto_copy["transitions"]:
+                        auto_copy["transitions"].append(transition)
 
-        if not etat_arrive_b == [-1, -1]:
-            if tuple(etat_arrive_b) not in auto_copy["etats"]:
-                auto_copy["etats"].append(tuple(etat_arrive_b))
-
-            transition_1_b = [(etat1, etat2), "b", tuple(etat_arrive_b)]
-            if transition_1_b not in auto_copy["transitions"]:
-                auto_copy["transitions"].append(transition_1_b)
     return auto_copy
 
 
@@ -1191,7 +1158,7 @@ if __name__ == "__main__":
         "etats": [1, 2, 3, 4],
         "transitions": [[1, 'a', 2], [1, 'b', 2], [1, 'a', 3], [2, 'b', 1], [2, 'a', 4], [3, 'b', 4], [4, 'b', 3], [4, 'a', 2]],
         "I": [1, 4],
-        "F": [3, 4] 
+        "F": [3, 4]
     }
 
     auto_inter_1 = {
@@ -1199,61 +1166,59 @@ if __name__ == "__main__":
         "etats": [0, 1, 2],
         "transitions": [[0, 'a', 1], [0, 'b', 0], [1, 'a', 1], [1, 'b', 2], [1, 'a', 2], [2, 'a', 1]],
         "I": [0],
-        "F": [0, 1, 2] 
+        "F": [0, 1, 2]
     }
     auto_inter_2 = {
         "alphabet": ['a', 'b'],
         "etats": [0, 1],
         "transitions": [[0, 'a', 0], [0, 'b', 1], [1, 'a', 1], [1, 'b', 0]],
         "I": [0],
-        "F": [0] 
+        "F": [0]
     }
     auto_minimisation = {
         "alphabet": ['a', 'b'],
         "etats": [1, 2, 3, 4, 5, 6, 7],
         "transitions": [[1, 'b', 2], [1, 'a', 4], [2, 'a', 3], [2, 'b', 7], [3, 'a', 2], [3, 'b', 5], [4, 'a', 7], [4, 'b', 7], [5, 'a', 7], [5, 'b', 6], [6, 'b', 5], [6, 'a', 7], [7, 'a', 5], [7, 'b', 7]],
         "I": [1],
-        "F": [1, 2, 4, 7] 
+        "F": [1, 2, 4, 7]
     }
-    # print("pref :")
-    # print(pref("coucou"))
-    # print("suf:")
-    # print(suf("coucou"))
-    # print("fact:")
-    # print(fact("coucou"))
-    # print("miroir (mir):")
-    # print(mir("coucou"))
+    print("pref :")
+    print(pref("coucou"))
+    print("suf:")
+    print(suf("coucou"))
+    print("fact:")
+    print(fact("coucou"))
+    print("miroir (mir):")
+    print(mir("coucou"))
 
-    # L1=['aa','ab','ba','bb']
-    # L2=['a', 'b', '']
-    # print("concatenation :")
-    # print(concatene(L1, L2))
-    # print("puis :")
-    # print(puis(L1, 2))
-    # print("tousmots :")
-    # print(tousmots(['a', 'b'], 3))
-    # print("lirelettre :")
-    # print(lirelettre(auto["transitions"], auto["etats"], 'a'))
-    # print("liremot :")
-    # print(liremot(auto["transitions"], auto["etats"], 'aba'))
-    # print("accepte :")
-    # print(accepte(auto, 'aba'))
-    # print("langage accept:")
-    # print(langage_accept(auto, 4))
-    # print("deterministe :")
-    # print(deterministe(auto_det))
-    # print("determinise :")
-    # print(determinise(auto_det))
-    # print("renommage determinise :")
-    # print(renommage(determinise(auto_det)))
-    # print("complet:")
-    # print(complet(auto0))
-    # print(complet(auto1))
-    # print("complete :")
-    # print(complete(auto0))
-    # print("complement:")
-    # print(complement(auto3))
-    # print(inter(auto3))
-
-
-
+    L1 = ['aa', 'ab', 'ba', 'bb']
+    L2 = ['a', 'b', '']
+    print("concatenation :")
+    print(concatene(L1, L2))
+    print("puis :")
+    print(puis(L1, 2))
+    print("tousmots :")
+    print(tousmots(['a', 'b'], 3))
+    print("lirelettre :")
+    print(lirelettre(auto["transitions"], auto["etats"], 'a'))
+    print("liremot :")
+    print(liremot(auto["transitions"], auto["etats"], 'aba'))
+    print("accepte :")
+    print(accepte(auto, 'aba'))
+    print("langage accept:")
+    print(langage_accept(auto, 4))
+    print("deterministe :")
+    print(deterministe(auto_det))
+    print("determinise :")
+    print(determinise(auto_det))
+    print("renommage determinise :")
+    print(renommage(determinise(auto_det)))
+    print("complet:")
+    print(complet(auto0))
+    print(complet(auto1))
+    print("complete :")
+    print(complete(auto0))
+    print("complement:")
+    print(complement(auto3))
+    print("intersection :")
+    print(inter(auto_inter_1, auto_inter_2))

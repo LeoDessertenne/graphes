@@ -20,3 +20,9 @@ automate = {
         "I": [1], # initial states
         "F": [4] # final states
     } 
+```
+
+
+- Correction des fonctions de lecture d'automate : `lirelettre` renvoie désormais les états atteignables, `liremot` consomme le mot tout en arrêtant proprement quand aucune transition ne correspond.
+- Produit d'automates revu pour gérer toutes les paires d'états et les transitions manquantes, évitant les erreurs de déballage.
+- Ajout de tests unitaires (`tests/test_automates.py`) couvrant `lirelettre` et `liremot` sur des automates simples.
